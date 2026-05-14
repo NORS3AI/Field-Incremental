@@ -15,6 +15,7 @@
     <div class="hud-item"><span class="hud-label">Gold</span><span id="hud-gold">0</span></div>
     <div class="hud-item"><span class="hud-label">Energy</span><span id="hud-energy">0</span>/<span id="hud-energy-max">0</span></div>
     <div class="hud-item"><span class="hud-label">Run</span><span id="hud-run-gold">0</span>g</div>
+    <button id="dev-gold" class="btn-dev dev-only hidden" type="button" title="Dev: +50 gold">+50g</button>
     <button id="hud-menu" class="btn-ghost" type="button">Menu</button>
   </header>
 
@@ -72,6 +73,17 @@
         <button data-text-size="16" type="button">16pt</button>
       </div>
     </div>
+
+    <h3 class="section-head">Developer</h3>
+    <div class="form-row">
+      <label for="dev-mode">Dev Panel</label>
+      <input type="checkbox" id="dev-mode" />
+    </div>
+    <div class="form-row dev-only hidden">
+      <span>Gold Cheat</span>
+      <button id="dev-add-gold-settings" class="btn-dev" type="button">+50 Gold</button>
+    </div>
+
     <button class="btn-secondary" data-go="menu" type="button">Back</button>
   </section>
 

@@ -140,6 +140,29 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   padding: 6px 12px;
 }
 
+.btn-dev {
+  background: #b94a8a;
+  color: #fff5fb;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 0 #6b1f4a, var(--shadow);
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+}
+.btn-dev:active { box-shadow: 0 1px 0 #6b1f4a, var(--shadow); }
+
+.section-head {
+  width: min(420px, 95%);
+  margin: 16px 0 6px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8em;
+  border-bottom: 1px dashed #1a2a10;
+  padding-bottom: 4px;
+}
+
 /* Game */
 #view-game {
   padding-top: 16px;
