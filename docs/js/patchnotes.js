@@ -1,6 +1,15 @@
 // Patch notes — newest first. Every push should add or update an entry here.
 window.PATCH_NOTES = [
   {
+    version: "0.2.0",
+    date: "2026-05-14",
+    notes: [
+      "Music: replaced the ambient pad with a step-sequenced synthwave bed (Am–F–C–G, 96 BPM) with drums, detuned-saw bass, dotted-eighth delayed lead, and a saw pad.",
+      "Settings: added a Developer section with a Dev Panel toggle.",
+      "Dev: when Dev Panel is on, a +50g button appears in the HUD (and inside Settings) for quick gold injection."
+    ]
+  },
+  {
     version: "0.1.0",
     date: "2026-05-14",
     notes: [

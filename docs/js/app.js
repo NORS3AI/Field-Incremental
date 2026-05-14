@@ -7,7 +7,7 @@
 
   // ---- Persisted slices ----
   const settings = Object.assign(
-    { musicVolume: 50, fxVolume: 50, muted: false, textSize: 14 },
+    { musicVolume: 50, fxVolume: 50, muted: false, textSize: 14, dev: false },
     Storage2.load("settings", {})
   );
 
@@ -81,6 +81,7 @@
     document.getElementById("fx-volume").value = settings.fxVolume;
     document.getElementById("fx-volume-val").textContent = settings.fxVolume;
     document.getElementById("mute").checked = !!settings.muted;
+    document.getElementById("dev-mode").checked = !!settings.dev;
     document.querySelectorAll("[data-text-size]").forEach(b => {
       b.classList.toggle("on", Number(b.dataset.textSize) === Number(settings.textSize));
     });
@@ -92,6 +93,10 @@
     Audio2.setMusicVolume(settings.musicVolume / 100);
     Audio2.setFxVolume(settings.fxVolume / 100);
     Audio2.setMuted(!!settings.muted);
+    body.dataset.dev = settings.dev ? "1" : "0";
+    document.querySelectorAll(".dev-only").forEach(el => {
+      el.classList.toggle("hidden", !settings.dev);
+    });
     Storage2.save("settings", settings);
   }
 
@@ -109,6 +114,22 @@
     settings.muted = !!e.target.checked;
     applySettings();
   });
+  document.getElementById("dev-mode").addEventListener("change", e => {
+    settings.dev = !!e.target.checked;
+    applySettings();
+  });
+
+  function addDevGold() {
+    state.gold += 50;
+    state.runGold += 50;
+    Audio2.playPurchase();
+    persist();
+    updateHud();
+    if (body.dataset.view === "upgrades") renderUpgrades();
+    toast("+50 gold (dev)");
+  }
+  document.getElementById("dev-gold").addEventListener("click", addDevGold);
+  document.getElementById("dev-add-gold-settings").addEventListener("click", addDevGold);
   document.querySelectorAll("[data-text-size]").forEach(b => {
     b.addEventListener("click", () => {
       settings.textSize = Number(b.dataset.textSize);
