@@ -17,10 +17,13 @@
   if (typeof saved.gold === "number") state.gold = saved.gold;
   if (saved.unlocks) Object.assign(state.unlocks, saved.unlocks);
   if (saved.upgrades) Object.assign(state.upgrades, saved.upgrades);
-  // Always start a fresh field/energy on load (don't store half-played field).
+  if (typeof saved.worthBonus === "number") state.worthBonus = saved.worthBonus;
+  if (typeof saved.radiusBonus === "number") state.radiusBonus = saved.radiusBonus;
+  if (saved.persistent && typeof saved.persistent === "object") state.persistent = saved.persistent;
+  // Always start a fresh run on load (don't store half-played field); trees persist.
   state.energy = Game.derived(state).maxEnergy;
   state.runGold = 0;
-  state.runHarvested = { wheat: 0, rye: 0, cotton: 0 };
+  state.runHarvested = Game.defaultState().runHarvested;
   state.field = Game.generateField(state);
 
   // ---- Routing ----
@@ -97,7 +100,15 @@
     document.querySelectorAll(".dev-only").forEach(el => {
       el.classList.toggle("hidden", !settings.dev);
     });
+    refreshDevReadouts();
     Storage2.save("settings", settings);
+  }
+
+  function refreshDevReadouts() {
+    const r = document.getElementById("dev-radius-val");
+    const w = document.getElementById("dev-worth-val");
+    if (r) r.textContent = Game.derived(state).radius;
+    if (w) w.textContent = "+" + (state.worthBonus || 0);
   }
 
   document.getElementById("music-volume").addEventListener("input", e => {
@@ -119,17 +130,34 @@
     applySettings();
   });
 
-  function addDevGold() {
-    state.gold += 50;
-    state.runGold += 50;
+  function addDevGold(amount) {
+    state.gold += amount;
+    state.runGold += amount;
     Audio2.playPurchase();
     persist();
     updateHud();
     if (body.dataset.view === "upgrades") renderUpgrades();
-    toast("+50 gold (dev)");
+    toast(`+${amount} gold (dev)`);
   }
-  document.getElementById("dev-gold").addEventListener("click", addDevGold);
-  document.getElementById("dev-add-gold-settings").addEventListener("click", addDevGold);
+  document.querySelectorAll("[data-dev-gold]").forEach(b => {
+    b.addEventListener("click", () => addDevGold(Number(b.dataset.devGold)));
+  });
+
+  document.getElementById("dev-radius").addEventListener("click", () => {
+    state.radiusBonus = (state.radiusBonus || 0) + 1;
+    Audio2.playPurchase();
+    persist();
+    refreshDevReadouts();
+    paint();
+    toast(`Radius +1 (now ${Game.derived(state).radius})`);
+  });
+  document.getElementById("dev-worth").addEventListener("click", () => {
+    state.worthBonus = (state.worthBonus || 0) + 1;
+    Audio2.playPurchase();
+    persist();
+    refreshDevReadouts();
+    toast(`Worth bonus +1 (now +${state.worthBonus})`);
+  });
   document.querySelectorAll("[data-text-size]").forEach(b => {
     b.addEventListener("click", () => {
       settings.textSize = Number(b.dataset.textSize);
@@ -180,16 +208,24 @@
     evt.preventDefault();
     const pos = canvasPos(evt);
 
-    const { harvested, goldGained } = Game.applyTap(state, pos.x, pos.y);
+    const { harvested, seedsDropped, goldGained } = Game.applyTap(state, pos.x, pos.y);
     Audio2.unlock();
     Audio2.playTap();
     if (harvested.length) {
-      const pitchByType = { wheat: 660, rye: 520, cotton: 880 };
-      Audio2.playHarvest(pitchByType[harvested[0].type] || 660);
+      const first = harvested[0].type;
+      // Higher pitch for rarer crops; lower pitch for trees/stumps.
+      const pitch = harvestPitch(first);
+      Audio2.playHarvest(pitch);
+    }
+    if (seedsDropped && seedsDropped.length) {
+      const tree = seedsDropped[0].tree;
+      const name = Game.TREES[tree] && Game.TREES[tree].name;
+      Audio2.playPurchase();
+      toast(`Rare ${name} seed!`);
     }
 
-    // If field is empty mid-run, regenerate so player can keep tapping.
-    if (state.field.every(c => c.harvested)) {
+    // If every crop tile is cleared, regenerate fresh crops (trees/stumps stay).
+    if (Game.cropsAllCleared(state)) {
       state.field = Game.generateField(state);
       toast("New field!");
     }
@@ -201,6 +237,16 @@
     if (state.energy <= 0) {
       showEndModal();
     }
+  }
+
+  function harvestPitch(type) {
+    if (Game.isCrop(type)) {
+      const tier = Game.CROP_KEYS.indexOf(type);
+      return 440 + tier * 50; // climbs with crop tier
+    }
+    if (Game.isTree(type)) return 220;
+    if (Game.isStump(type)) return 180;
+    return 660;
   }
 
   function onMove(evt) {
@@ -221,13 +267,18 @@
     document.getElementById("end-gold").textContent = state.runGold;
     const breakdown = document.getElementById("end-breakdown");
     breakdown.innerHTML = "";
-    for (const k of ["wheat", "rye", "cotton"]) {
-      if (state.runHarvested[k] > 0) {
-        const li = document.createElement("li");
-        const def = Game.CROPS[k];
-        li.textContent = `${def.name}: ${state.runHarvested[k]}`;
-        breakdown.appendChild(li);
-      }
+    const rows = [];
+    for (const k of Game.CROP_KEYS) {
+      if (state.runHarvested[k] > 0) rows.push([Game.CROPS[k].name, state.runHarvested[k]]);
+    }
+    for (const k of Game.TREE_KEYS) {
+      if (state.runHarvested[k] > 0) rows.push([Game.TREES[k].name + " tree", state.runHarvested[k]]);
+    }
+    if (state.runHarvested.stump > 0) rows.push(["Stumps", state.runHarvested.stump]);
+    for (const [label, n] of rows) {
+      const li = document.createElement("li");
+      li.textContent = `${label}: ${n}`;
+      breakdown.appendChild(li);
     }
     endModal.classList.remove("hidden");
   }
@@ -261,7 +312,8 @@
 
     const unlocks = document.getElementById("unlock-list");
     unlocks.innerHTML = "";
-    for (const key of ["rye", "cotton"]) {
+    const unlockKeys = Game.CROP_KEYS.filter(k => k !== "wheat");
+    for (const key of unlockKeys) {
       const def = Game.CROPS[key];
       const owned = state.unlocks[key];
       const card = document.createElement("div");
@@ -284,7 +336,8 @@
 
   function cropBlurb(key) {
     const def = Game.CROPS[key];
-    return `${def.hp} HP · ${def.gold}g per harvest. Mixes into the field once unlocked.`;
+    const seedPct = Math.round((def.seedChance || 0) * 100);
+    return `${def.hp} HP · ${def.gold}g per harvest. Seed drop ~${seedPct}%. Mixes into the field once unlocked.`;
   }
 
   function buyUpgrade(key) {
@@ -315,7 +368,7 @@
     const d = Game.derived(state);
     state.energy = d.maxEnergy;
     state.runGold = 0;
-    state.runHarvested = { wheat: 0, rye: 0, cotton: 0 };
+    state.runHarvested = Game.defaultState().runHarvested;
     state.field = Game.generateField(state);
     persist();
     go("game");
@@ -326,7 +379,10 @@
     Storage2.save("state", {
       gold: state.gold,
       unlocks: state.unlocks,
-      upgrades: state.upgrades
+      upgrades: state.upgrades,
+      worthBonus: state.worthBonus,
+      radiusBonus: state.radiusBonus,
+      persistent: state.persistent
     });
   }
 

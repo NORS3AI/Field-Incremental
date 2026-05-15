@@ -15,7 +15,12 @@
     <div class="hud-item"><span class="hud-label">Gold</span><span id="hud-gold">0</span></div>
     <div class="hud-item"><span class="hud-label">Energy</span><span id="hud-energy">0</span>/<span id="hud-energy-max">0</span></div>
     <div class="hud-item"><span class="hud-label">Run</span><span id="hud-run-gold">0</span>g</div>
-    <button id="dev-gold" class="btn-dev dev-only hidden" type="button" title="Dev: +50 gold">+50g</button>
+    <div class="hud-dev dev-only hidden">
+      <button id="dev-gold"    class="btn-dev" type="button" data-dev-gold="50"   title="Dev: +50 gold">+50</button>
+      <button id="dev-gold100" class="btn-dev" type="button" data-dev-gold="100"  title="Dev: +100 gold">+100</button>
+      <button id="dev-gold500" class="btn-dev" type="button" data-dev-gold="500"  title="Dev: +500 gold">+500</button>
+      <button id="dev-gold1k"  class="btn-dev" type="button" data-dev-gold="1000" title="Dev: +1000 gold">+1k</button>
+    </div>
     <button id="hud-menu" class="btn-ghost" type="button">Menu</button>
   </header>
 
@@ -80,8 +85,27 @@
       <input type="checkbox" id="dev-mode" />
     </div>
     <div class="form-row dev-only hidden">
-      <span>Gold Cheat</span>
-      <button id="dev-add-gold-settings" class="btn-dev" type="button">+50 Gold</button>
+      <span>Add Gold</span>
+      <div class="seg dev-btn-row">
+        <button class="btn-dev" type="button" data-dev-gold="50">+50</button>
+        <button class="btn-dev" type="button" data-dev-gold="100">+100</button>
+        <button class="btn-dev" type="button" data-dev-gold="500">+500</button>
+        <button class="btn-dev" type="button" data-dev-gold="1000">+1000</button>
+      </div>
+    </div>
+    <div class="form-row dev-only hidden">
+      <span>Tap Radius</span>
+      <div class="seg dev-btn-row">
+        <button class="btn-dev" id="dev-radius" type="button">+1 px</button>
+        <span class="value" id="dev-radius-val">22</span>
+      </div>
+    </div>
+    <div class="form-row dev-only hidden">
+      <span>Resource Worth</span>
+      <div class="seg dev-btn-row">
+        <button class="btn-dev" id="dev-worth" type="button">+1 g</button>
+        <span class="value" id="dev-worth-val">+0</span>
+      </div>
     </div>
 
     <button class="btn-secondary" data-go="menu" type="button">Back</button>

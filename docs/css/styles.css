@@ -71,6 +71,15 @@ body {
   margin-right: 4px;
 }
 #hud-menu { margin-left: auto; }
+.hud-dev {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.hud-dev + #hud-menu { margin-left: 4px; }
+.hud-dev .btn-dev { padding: 4px 8px; font-size: 0.78em; }
+.dev-btn-row { flex-wrap: wrap; }
+.dev-btn-row .btn-dev { padding: 6px 10px; }
 
 /* Menu */
 .title {
